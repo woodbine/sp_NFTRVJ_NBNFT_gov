@@ -1,3 +1,14 @@
+# -*- coding: utf-8 -*-
+
+#### IMPORTS 1.0
+
+import os
+import re
+import scraperwiki
+import urllib2
+from datetime import datetime
+from bs4 import BeautifulSoup
+
 #### FUNCTIONS 1.2
 import requests       # import requests for validating urls
 
