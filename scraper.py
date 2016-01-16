@@ -44,3 +44,86 @@ def validateURL(url):
     except:
         print ("Error validating URL.")
         return False, False
+
+def validate(filename, file_url):
+    validFilename = validateFilename(filename)
+    validURL, validFiletype = validateURL(file_url)
+    if not validFilename:
+        print filename, "*Error: Invalid filename*"
+        print file_url
+        return False
+    if not validURL:
+        print filename, "*Error: Invalid URL*"
+        print file_url
+        return False
+    if not validFiletype:
+        print filename, "*Error: Invalid filetype*"
+        print file_url
+        return False
+    return True
+
+
+def convert_mth_strings ( mth_string ):
+    month_numbers = {'JAN': '01', 'FEB': '02', 'MAR':'03', 'APR':'04', 'MAY':'05', 'JUN':'06', 'JUL':'07', 'AUG':'08', 'SEP':'09','OCT':'10','NOV':'11','DEC':'12' }
+    for k, v in month_numbers.items():
+        mth_string = mth_string.replace(k, v)
+    return mth_string
+
+#### VARIABLES 1.0
+
+entity_id = "NFTRTP_SASHNFT_gov"
+url = "http://www.surreyandsussex.nhs.uk/about-us/freedom-of-information/list-and-registers/publication-of-spend-over-25000-pounds/"
+errors = 0
+data = []
+
+#### READ HTML 1.2
+
+html = requests.get(url)
+soup = BeautifulSoup(html.text, 'lxml')
+
+
+#### SCRAPE DATA
+
+blocks = soup.find_all('div', 'accordion-content')
+for block in blocks:
+    links = block.find_all('a')
+    for link in links:
+        try:
+            if '.csv' in link['href'] or '.xls' in link['href'] or '.xlsx' in link['href'] or '.pdf' in link['href']:
+
+                url = link['href']
+                title = link.text.strip().split('GL Expenditure')[-1].split(u'–')[-1].strip()
+                csvMth = title[:3]
+                csvYr = title[-4:]
+                if 'r 15' in csvYr:
+                    csvYr = '2015'
+                csvMth = convert_mth_strings(csvMth.upper())
+                data.append([csvYr, csvMth, url])
+        except:
+            pass
+
+
+
+
+
+#### STORE DATA 1.0
+
+for row in data:
+    csvYr, csvMth, url = row
+    filename = entity_id + "_" + csvYr + "_" + csvMth
+    todays_date = str(datetime.now())
+    file_url = url.strip()
+
+    valid = validate(filename, file_url)
+
+    if valid == True:
+        scraperwiki.sqlite.save(unique_keys=['l'], data={"l": file_url, "f": filename, "d": todays_date })
+        print filename
+    else:
+        errors += 1
+
+if errors > 0:
+    raise Exception("%d errors occurred during scrape." % errors)
+
+
+#### EOF
