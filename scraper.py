@@ -85,7 +85,7 @@ def convert_mth_strings ( mth_string ):
 #### VARIABLES 1.0
 
 entity_id = "NFTRVJ_NBNFT_gov"
-url = "https://www.nbt.nhs.uk/about-us/information-governance/spending-over-£25000"
+url = "https://www.nbt.nhs.uk/about-us/information-governance/freedom-information/spending-over-%C2%A325000"
 errors = 0
 data = []
 
