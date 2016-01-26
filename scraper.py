@@ -9,8 +9,7 @@ import urllib2
 from datetime import datetime
 from bs4 import BeautifulSoup
 
-#### FUNCTIONS 1.2
-import requests       # import requests for validating urls
+#### FUNCTIONS 1.0
 
 def validateFilename(filename):
     filenameregex = '^[a-zA-Z0-9]+_[a-zA-Z0-9]+_[a-zA-Z0-9]+_[0-9][0-9][0-9][0-9]_[0-9QY][0-9]$'
@@ -38,23 +37,26 @@ def validateFilename(filename):
 
 def validateURL(url):
     try:
-        r = requests.get(url, allow_redirects=True, timeout=20)
+        r = urllib2.urlopen(url)
         count = 1
-        while r.status_code == 500 and count < 4:
+        while r.getcode() == 500 and count < 4:
             print ("Attempt {0} - Status code: {1}. Retrying.".format(count, r.status_code))
             count += 1
-            r = requests.get(url, allow_redirects=True, timeout=20)
+            r = urllib2.urlopen(url)
         sourceFilename = r.headers.get('Content-Disposition')
+
         if sourceFilename:
             ext = os.path.splitext(sourceFilename)[1].replace('"', '').replace(';', '').replace(' ', '')
         else:
             ext = os.path.splitext(url)[1]
-        validURL = r.status_code == 200
+        validURL = r.getcode() == 200
         validFiletype = ext.lower() in ['.csv', '.xls', '.xlsx', '.pdf']
         return validURL, validFiletype
     except:
         print ("Error validating URL.")
         return False, False
+
+
 
 def validate(filename, file_url):
     validFilename = validateFilename(filename)
@@ -82,36 +84,33 @@ def convert_mth_strings ( mth_string ):
 
 #### VARIABLES 1.0
 
-entity_id = "NFTRTP_SASHNFT_gov"
-url = "http://www.surreyandsussex.nhs.uk/about-us/freedom-of-information/list-and-registers/publication-of-spend-over-25000-pounds/"
+entity_id = "NFTRVJ_NBNFT_gov"
+url = "https://www.nbt.nhs.uk/about-us/information-governance/freedom-information/spending-over-%C2%A325000"
 errors = 0
 data = []
 
 #### READ HTML 1.2
 
-html = requests.get(url)
-soup = BeautifulSoup(html.text, 'lxml')
+html = urllib2.urlopen(url)
+soup = BeautifulSoup(html, 'lxml')
 
 
 #### SCRAPE DATA
 
-blocks = soup.find_all('div', 'accordion-content')
-for block in blocks:
-    links = block.find_all('a')
-    for link in links:
-        try:
-            if '.csv' in link['href'] or '.xls' in link['href'] or '.xlsx' in link['href'] or '.pdf' in link['href']:
 
-                url = link['href']
-                title = link.text.strip().split('GL Expenditure')[-1].split(u'–')[-1].strip()
-                csvMth = title[:3]
-                csvYr = title[-4:]
-                if 'r 15' in csvYr:
-                    csvYr = '2015'
-                csvMth = convert_mth_strings(csvMth.upper())
-                data.append([csvYr, csvMth, url])
-        except:
-            pass
+links = soup.find_all('a')
+for link in links:
+    try:
+        if '.csv' in link['href'] or '.xls' in link['href'] or '.xlsx' in link['href'] or '.pdf' in link['href']:
+
+            url = link['href']
+            title = link.text.strip().split('000')[-1].split('-')[-1].strip()
+            csvMth = title[:3]
+            csvYr = title.split(' ')[-1][:4]
+            csvMth = convert_mth_strings(csvMth.upper())
+            data.append([csvYr, csvMth, url])
+    except:
+        pass
 
 
 
