@@ -85,35 +85,36 @@ def convert_mth_strings ( mth_string ):
 #### VARIABLES 1.0
 
 entity_id = "NFTRVJ_NBNFT_gov"
-url = "https://www.nbt.nhs.uk/about-us/information-governance/freedom-information/spending-over-%C2%A325000"
+url = 'https://www.nbt.nhs.uk/about-us/information-governance/spending-over-£25000'
 errors = 0
 data = []
 
 #### READ HTML 1.2
-
-html = urllib2.urlopen(url)
-soup = BeautifulSoup(html, 'lxml')
+import requests    # import requests to exclude errors
+html = requests.get(url)
+soup = BeautifulSoup(html.text, 'lxml')
 
 
 #### SCRAPE DATA
 
+archive_links = soup.find('li', 'expanded active-trail active menu-mlid-1491').find_all('a')
+for archive_link in archive_links:
+    archive_url = 'https://www.nbt.nhs.uk'+archive_link['href']
+    html = requests.get(archive_url)
+    soup = BeautifulSoup(html.text, 'lxml')
+    links = soup.find_all('a')
+    for link in links:
+        try:
+            if '.csv' in link['href'] or '.xls' in link['href'] or '.xlsx' in link['href'] or '.pdf' in link['href']:
 
-links = soup.find_all('a')
-for link in links:
-    try:
-        if '.csv' in link['href'] or '.xls' in link['href'] or '.xlsx' in link['href'] or '.pdf' in link['href']:
-
-            url = link['href']
-            title = link.text.strip().split('000')[-1].split('-')[-1].strip()
-            csvMth = title[:3]
-            csvYr = title.split(' ')[-1][:4]
-            csvMth = convert_mth_strings(csvMth.upper())
-            data.append([csvYr, csvMth, url])
-    except:
-        pass
-
-
-
+                url = link['href']
+                title = link.text.strip().split('000')[-1].split('-')[-1].strip()
+                csvMth = title[:3]
+                csvYr = title.split(' ')[1][:4]
+                csvMth = convert_mth_strings(csvMth.upper())
+                data.append([csvYr, csvMth, url])
+        except:
+            pass
 
 
 #### STORE DATA 1.0
