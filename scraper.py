@@ -97,24 +97,16 @@ soup = BeautifulSoup(html.text, 'lxml')
 
 #### SCRAPE DATA
 
-archive_links = soup.find('li', 'expanded active-trail active menu-mlid-1491').find_all('a')
+archive_links = soup.find('h1', text="Spending over £25,000").find_next('div').find('section', 'col-xs-12').find_all('img', 'file-icon')
 for archive_link in archive_links:
-    archive_url = 'https://www.nbt.nhs.uk'+archive_link['href']
-    html = requests.get(archive_url)
-    soup = BeautifulSoup(html.text, 'lxml')
-    links = soup.find_all('a')
-    for link in links:
-        try:
-            if '.csv' in link['href'] or '.xls' in link['href'] or '.xlsx' in link['href'] or '.pdf' in link['href']:
-
-                url = link['href']
-                title = link.text.strip().split('000')[-1].split('-')[-1].strip()
-                csvMth = title[:3]
-                csvYr = title.split(' ')[1][:4]
-                csvMth = convert_mth_strings(csvMth.upper())
-                data.append([csvYr, csvMth, url])
-        except:
-            pass
+    link = archive_link.find_next('a')
+    if '.xls' in link['href'] or '.xlsx' in link['href']:
+        url = link['href']
+        title = link.text.strip().split('000')[-1].split('-')[-1].strip()
+        csvMth = title[:3]
+        csvYr = title.split(' ')[1][:4]
+        csvMth = convert_mth_strings(csvMth.upper())
+        data.append([csvYr, csvMth, url])
 
 
 #### STORE DATA 1.0
